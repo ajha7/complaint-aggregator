@@ -1,3 +1,4 @@
+
 import { RedditPost, RedditComment, Complaint, ComplaintCluster } from './types';
 import { toast } from '@/hooks/use-toast';
 
@@ -55,7 +56,8 @@ const SENTIMENT_DICTIONARY = {
   'waste': -3, 'problem': -2, 'issue': -2, 'difficult': -2, 'frustrating': -2,
   'expensive': -2, 'overpriced': -2, 'slow': -2, 'broken': -3, 'bug': -2,
   'glitch': -2, 'error': -2, 'crash': -3, 'freezes': -3, 'annoying': -2,
-  'confusing': -2, 'confused': -2, 'complicated': -2, 'sucks': -4, 'garbage': -4, 'trash': -4, 'disaster': -4,
+  'confusing': -2, 'confused': -2, 'complicated': -2, 'sucks': -4, 'garbage': -4, 
+  'trash': -4, 'disaster': -4
   
   // Positive terms (with weights)
   'good': 2, 'great': 3, 'excellent': 4, 'amazing': 4, 'awesome': 4,
@@ -329,6 +331,11 @@ export function clusterComplaints(
             cluster.negativeTermsCount = (cluster.negativeTermsCount || 0) + 1;
           }
           
+          // Carry over the category from the complaint if the cluster doesn't have one
+          if (!cluster.category && complaint.category) {
+            cluster.category = complaint.category;
+          }
+          
           foundCluster = true;
           break;
         }
@@ -352,6 +359,11 @@ export function clusterComplaints(
                 cluster.negativeTermsCount = (cluster.negativeTermsCount || 0) + 1;
               }
               
+              // Carry over the category from the complaint if the cluster doesn't have one
+              if (!cluster.category && complaint.category) {
+                cluster.category = complaint.category;
+              }
+              
               foundCluster = true;
               break;
             }
@@ -370,7 +382,8 @@ export function clusterComplaints(
           totalScore: complaint.score,
           frequency: 1,
           avgSentiment: complaint.sentiment || 0,
-          negativeTermsCount: complaint.containsNegativeTerms ? 1 : 0
+          negativeTermsCount: complaint.containsNegativeTerms ? 1 : 0,
+          category: complaint.category
         });
       }
     }
