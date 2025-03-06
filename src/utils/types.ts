@@ -48,6 +48,7 @@ export interface ComplaintCluster {
   complaints: Complaint[];
   totalScore: number;
   frequency: number;
+  category?: string; // Added this property
   avgSentiment?: number; // Average sentiment of complaints in the cluster
   negativeTermsCount?: number; // Count of complaints with negative terms
 }

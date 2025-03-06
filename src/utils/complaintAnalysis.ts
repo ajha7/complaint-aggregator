@@ -55,8 +55,7 @@ const SENTIMENT_DICTIONARY = {
   'waste': -3, 'problem': -2, 'issue': -2, 'difficult': -2, 'frustrating': -2,
   'expensive': -2, 'overpriced': -2, 'slow': -2, 'broken': -3, 'bug': -2,
   'glitch': -2, 'error': -2, 'crash': -3, 'freezes': -3, 'annoying': -2,
-  'confusing': -2, 'confused': -2, 'complicated': -2, 'difficult': -2,
-  'sucks': -4, 'garbage': -4, 'trash': -4, 'disaster': -4,
+  'confusing': -2, 'confused': -2, 'complicated': -2, 'sucks': -4, 'garbage': -4, 'trash': -4, 'disaster': -4,
   
   // Positive terms (with weights)
   'good': 2, 'great': 3, 'excellent': 4, 'amazing': 4, 'awesome': 4,
@@ -69,7 +68,7 @@ const SENTIMENT_DICTIONARY = {
 // Linguistic negation terms that can flip sentiment
 const NEGATION_TERMS = [
   'not', 'no', 'never', 'don\'t', 'doesn\'t', 'didn\'t', 'can\'t', 'cannot',
-  'couldn\'t', 'shouldn\'t', 'wouldn\'t', 'isn\'t', 'aren\'t', 'wasn\'t', 'weren\'t'
+  'couldn't', 'shouldn't', 'wouldn't', 'isn\'t', 'aren\'t', 'wasn\'t', 'weren\'t'
 ];
 
 /**

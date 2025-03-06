@@ -71,7 +71,11 @@ export async function fetchSubredditPosts(
     return posts;
   } catch (error) {
     console.error('Error fetching subreddit posts:', error);
-    toast.error(`Failed to fetch posts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    toast({
+      title: "Error",
+      description: `Failed to fetch posts: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      variant: "destructive"
+    });
     return [];
   }
 }
