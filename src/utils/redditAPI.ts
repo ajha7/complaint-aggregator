@@ -1,6 +1,5 @@
-
 import { RedditPost, RedditComment } from './types';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/hooks/use-toast';
 
 // Reddit API endpoints
 const REDDIT_API_BASE = 'https://www.reddit.com';

@@ -33,6 +33,7 @@ export interface Complaint {
     author: string;
     score: number;
     permalink: string;
+    created_utc: number; // Added this property
   };
   score: number;
   confidence: number;
@@ -58,7 +59,7 @@ export interface AnalysisState {
   };
   error?: string;
   subreddit?: string;
-  timeRange?: string;
+  timeRange?: string; // Changed to string to match how it's used
   posts?: RedditPost[];
   complaints?: Complaint[];
   clusters?: ComplaintCluster[];

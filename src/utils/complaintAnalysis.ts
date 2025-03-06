@@ -1,6 +1,5 @@
-
 import { RedditPost, RedditComment, Complaint, ComplaintCluster } from './types';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/hooks/use-toast';
 
 // A simple sentiment classifier using keywords (will be replaced with ML in a production app)
 // This is a placeholder for demonstration - in a real app, you'd use a proper NLP model
@@ -62,7 +61,8 @@ function processComments(
           id: comment.id,
           author: comment.author,
           score: comment.score,
-          permalink: comment.permalink
+          permalink: comment.permalink,
+          created_utc: comment.created_utc // Include created_utc from comment
         },
         score: comment.score,
         confidence
@@ -104,7 +104,8 @@ export function extractComplaints(
             id: post.id,
             author: post.author,
             score: post.score,
-            permalink: post.permalink
+            permalink: post.permalink,
+            created_utc: post.created_utc // Include created_utc from post
           },
           score: post.score,
           confidence

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import SubredditForm from '@/components/SubredditForm';
@@ -7,7 +6,7 @@ import ComplaintsDashboard from '@/components/ComplaintsDashboard';
 import { AnalysisState, RedditPost, Complaint, ComplaintCluster } from '@/utils/types';
 import { fetchSubredditData } from '@/utils/redditAPI';
 import { extractComplaints, clusterComplaints, summarizeClusters } from '@/utils/complaintAnalysis';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [analysisState, setAnalysisState] = useState<AnalysisState>({
@@ -38,7 +37,7 @@ const Index = () => {
       setAnalysisState({
         status: 'loading',
         subreddit,
-        timeRange,
+        timeRange: timeRange.toString(),
         progress: {
           current: 0,
           total: 100,
@@ -76,7 +75,7 @@ const Index = () => {
       setAnalysisState({
         status: 'success',
         subreddit,
-        timeRange,
+        timeRange: timeRange.toString(),
         posts,
         complaints,
         clusters: summarizedClusters,
@@ -168,7 +167,7 @@ const Index = () => {
               <div className="glass p-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
                   </svg>
                 </div>
                 <h3 className="text-lg font-medium mb-2">Smart Aggregation</h3>
