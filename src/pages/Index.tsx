@@ -6,9 +6,10 @@ import ComplaintsDashboard from '@/components/ComplaintsDashboard';
 import { AnalysisState, RedditPost, Complaint, ComplaintCluster } from '@/utils/types';
 import { fetchSubredditData } from '@/utils/redditAPI';
 import { extractComplaints, clusterComplaints, summarizeClusters } from '@/utils/complaintAnalysis';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
+  const { toast } = useToast();
   const [analysisState, setAnalysisState] = useState<AnalysisState>({
     status: 'idle',
     progress: {
@@ -50,7 +51,11 @@ const Index = () => {
       const posts = await fetchSubredditData(subreddit, timeRange, updateProgress);
 
       if (posts.length === 0) {
-        toast.error(`No posts found in r/${subreddit} for the selected time range`);
+        toast({
+          title: "Error",
+          description: `No posts found in r/${subreddit} for the selected time range`,
+          variant: "destructive"
+        });
         setAnalysisState(prev => ({ ...prev, status: 'error', error: 'No posts found' }));
         return;
       }
@@ -60,7 +65,11 @@ const Index = () => {
       const complaints = extractComplaints(posts, updateProgress);
 
       if (complaints.length === 0) {
-        toast.warning(`No complaints detected in r/${subreddit}`);
+        toast({
+          title: "Warning",
+          description: `No complaints detected in r/${subreddit}`,
+          variant: "warning"
+        });
       }
 
       // Step 3: Cluster similar complaints
@@ -87,13 +96,19 @@ const Index = () => {
         }
       });
 
-      toast.success(`Analysis of r/${subreddit} complete`, {
-        description: `Found ${complaints.length} complaints in ${posts.length} posts`
+      toast({
+        title: "Success",
+        description: `Analysis of r/${subreddit} complete. Found ${complaints.length} complaints in ${posts.length} posts`,
+        variant: "default"
       });
 
     } catch (error) {
       console.error('Analysis error:', error);
-      toast.error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast({
+        title: "Error",
+        description: `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
       setAnalysisState(prev => ({
         ...prev,
         status: 'error',

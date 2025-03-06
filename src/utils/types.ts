@@ -33,12 +33,13 @@ export interface Complaint {
     author: string;
     score: number;
     permalink: string;
-    created_utc: number; // Added this property
+    created_utc: number;
   };
   score: number;
   confidence: number;
   category?: string;
-  sentiment?: number;
+  sentiment?: number; // Negative values indicate negative sentiment
+  containsNegativeTerms?: boolean; // Flag for comments containing "hate" or equivalent terms
 }
 
 export interface ComplaintCluster {
@@ -47,6 +48,8 @@ export interface ComplaintCluster {
   complaints: Complaint[];
   totalScore: number;
   frequency: number;
+  avgSentiment?: number; // Average sentiment of complaints in the cluster
+  negativeTermsCount?: number; // Count of complaints with negative terms
 }
 
 // App state types
@@ -59,9 +62,12 @@ export interface AnalysisState {
   };
   error?: string;
   subreddit?: string;
-  timeRange?: string; // Changed to string to match how it's used
+  timeRange?: string; // String to match how it's used
   posts?: RedditPost[];
   complaints?: Complaint[];
   clusters?: ComplaintCluster[];
   lastUpdated?: number;
+  filters?: {
+    showNegativeOnly?: boolean;
+  };
 }

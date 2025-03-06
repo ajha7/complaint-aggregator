@@ -1,43 +1,173 @@
 import { RedditPost, RedditComment, Complaint, ComplaintCluster } from './types';
 import { toast } from '@/hooks/use-toast';
 
-// A simple sentiment classifier using keywords (will be replaced with ML in a production app)
-// This is a placeholder for demonstration - in a real app, you'd use a proper NLP model
-const COMPLAINT_INDICATORS = [
-  'issue', 'problem', 'bug', 'glitch', 'broken', 'error', 'trouble',
-  'disappointed', 'disappointed with', 'dissatisfied', 'unhappy', 'upset',
-  'terrible', 'horrible', 'awful', 'bad', 'worst', 'sucks', 'hate',
-  'fix', 'needs to be fixed', 'should be fixed', 'doesn\'t work', 'not working',
-  'doesn\'t load', 'can\'t access', 'can\'t use', 'useless', 'waste',
-  'poor', 'low quality', 'disappointing', 'frustrating', 'annoying',
-  'slow', 'laggy', 'crash', 'freezes', 'hangs', 'unresponsive',
-  'overpriced', 'expensive', 'not worth', 'waste of money', 'refund',
-  'customer service', 'support', 'response', 'waiting', 'no response',
-  'misleading', 'false', 'deceptive', 'scam', 'fraud'
+// Expanded list of complaint indicators, categorized by type
+const COMPLAINT_CATEGORIES = {
+  PRODUCT_ISSUES: [
+    'broken', 'bug', 'glitch', 'crash', 'freezes', 'hangs', 'slow', 'laggy',
+    'unresponsive', 'doesn\'t work', 'not working', 'doesn\'t load', 'can\'t access',
+    'feature request', 'missing feature', 'needs improvement'
+  ],
+  SERVICE_QUALITY: [
+    'poor service', 'bad service', 'terrible service', 'customer service',
+    'response time', 'waiting', 'no response', 'never responded', 'ignored',
+    'unprofessional', 'rude', 'unhelpful'
+  ],
+  PRICING_CONCERNS: [
+    'expensive', 'overpriced', 'not worth', 'waste of money', 'refund',
+    'price increase', 'cost too much', 'paying too much', 'charge too much',
+    'subscription', 'hidden fees', 'unexpected charges'
+  ],
+  USER_EXPERIENCE: [
+    'confusing', 'complicated', 'hard to use', 'difficult to navigate', 'unintuitive',
+    'can\'t figure out', 'frustrating experience', 'bad design', 'poor design',
+    'bad UI', 'bad UX', 'difficult to understand'
+  ],
+  RELIABILITY_ISSUES: [
+    'unreliable', 'inconsistent', 'stops working', 'keeps crashing',
+    'always down', 'outage', 'downtime', 'server issues', 'maintenance',
+    'connection issues', 'disconnects', 'timeouts'
+  ],
+  DISSATISFACTION: [
+    'disappointed', 'disappointed with', 'dissatisfied', 'unhappy', 'upset',
+    'terrible', 'horrible', 'awful', 'bad', 'worst', 'sucks', 'hate',
+    'regret', 'waste of time', 'would not recommend', 'don\'t recommend'
+  ]
+};
+
+// Comprehensive list of all complaint indicators flattened
+const ALL_COMPLAINT_INDICATORS = Object.values(COMPLAINT_CATEGORIES).flat();
+
+// List of strongly negative terms to flag for the "hate/negative" filter
+const NEGATIVE_TERMS = [
+  'hate', 'despise', 'loathe', 'terrible', 'worst', 'garbage', 'trash',
+  'useless', 'awful', 'pathetic', 'horrible', 'disaster', 'disgusting',
+  'appalling', 'atrocious', 'abysmal', 'deplorable', 'dreadful', 'intolerable',
+  'abomination', 'catastrophe', 'nightmare', 'horrific', 'repulsive', 'contempt',
+  'revolting', 'inexcusable', 'unforgivable', 'ridiculous', 'scam', 'fraud'
+];
+
+// Simple sentiment analysis dictionary (expanded)
+const SENTIMENT_DICTIONARY = {
+  // Negative terms (with weights)
+  'hate': -5, 'terrible': -4, 'awful': -4, 'horrible': -4, 'worst': -4,
+  'bad': -3, 'poor': -3, 'disappointed': -3, 'disappointing': -3, 'useless': -3,
+  'waste': -3, 'problem': -2, 'issue': -2, 'difficult': -2, 'frustrating': -2,
+  'expensive': -2, 'overpriced': -2, 'slow': -2, 'broken': -3, 'bug': -2,
+  'glitch': -2, 'error': -2, 'crash': -3, 'freezes': -3, 'annoying': -2,
+  'confusing': -2, 'confused': -2, 'complicated': -2, 'difficult': -2,
+  'sucks': -4, 'garbage': -4, 'trash': -4, 'disaster': -4,
+  
+  // Positive terms (with weights)
+  'good': 2, 'great': 3, 'excellent': 4, 'amazing': 4, 'awesome': 4,
+  'love': 5, 'like': 2, 'helpful': 3, 'works': 2, 'working': 2,
+  'easy': 2, 'simple': 2, 'fast': 2, 'quick': 2, 'reliable': 3,
+  'worth': 2, 'recommend': 3, 'satisfied': 3, 'happy': 3, 'pleased': 3,
+  'perfect': 4, 'fantastic': 4, 'brilliant': 4, 'superb': 4
+};
+
+// Linguistic negation terms that can flip sentiment
+const NEGATION_TERMS = [
+  'not', 'no', 'never', 'don\'t', 'doesn\'t', 'didn\'t', 'can\'t', 'cannot',
+  'couldn\'t', 'shouldn\'t', 'wouldn\'t', 'isn\'t', 'aren\'t', 'wasn\'t', 'weren\'t'
 ];
 
 /**
- * Analyzes text to detect if it contains a complaint
- * In a real app, this would use NLP or ML models
+ * Enhanced text analysis to detect complaints using multiple signals
+ * This provides a more nuanced and accurate assessment than simple keyword matching
  */
-function detectComplaint(text: string): { isComplaint: boolean; confidence: number } {
+function analyzeText(text: string): { 
+  isComplaint: boolean; 
+  confidence: number; 
+  category?: string;
+  sentiment: number;
+  containsNegativeTerms: boolean;
+} {
   if (!text || text.length < 5) {
-    return { isComplaint: false, confidence: 0 };
+    return { 
+      isComplaint: false, 
+      confidence: 0, 
+      sentiment: 0,
+      containsNegativeTerms: false 
+    };
   }
   
   const textLower = text.toLowerCase();
-  let complaintsFound = 0;
+  const words = textLower.split(/\s+/);
   
-  for (const indicator of COMPLAINT_INDICATORS) {
-    if (textLower.includes(indicator.toLowerCase())) {
-      complaintsFound++;
+  // Check for strongly negative terms first
+  const containsNegativeTerms = NEGATIVE_TERMS.some(term => textLower.includes(term));
+  
+  // Category detection
+  let detectedCategory = '';
+  let highestCategoryMatches = 0;
+  
+  for (const [category, indicators] of Object.entries(COMPLAINT_CATEGORIES)) {
+    const categoryMatches = indicators.filter(indicator => textLower.includes(indicator)).length;
+    if (categoryMatches > highestCategoryMatches) {
+      highestCategoryMatches = categoryMatches;
+      detectedCategory = category;
     }
   }
   
-  const confidence = complaintsFound / (COMPLAINT_INDICATORS.length * 0.2);
+  // Check all complaint indicators for general complaint detection
+  let complaintIndicatorsFound = 0;
+  for (const indicator of ALL_COMPLAINT_INDICATORS) {
+    if (textLower.includes(indicator)) {
+      complaintIndicatorsFound++;
+    }
+  }
+  
+  // Calculate complaint confidence
+  const indicatorRatio = complaintIndicatorsFound / (ALL_COMPLAINT_INDICATORS.length * 0.1);
+  const confidence = Math.min(Math.max(indicatorRatio, 0), 1);
+  
+  // More sophisticated sentiment analysis
+  let sentiment = 0;
+  let negationActive = false;
+  
+  // Process text for sentiment with negation handling
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i].replace(/[^a-z']/g, ''); // Clean punctuation
+    
+    // Check for negation
+    if (NEGATION_TERMS.includes(word)) {
+      negationActive = true;
+      continue;
+    }
+    
+    // Apply sentiment with negation logic
+    if (SENTIMENT_DICTIONARY[word]) {
+      const sentimentValue = SENTIMENT_DICTIONARY[word];
+      sentiment += negationActive ? -sentimentValue : sentimentValue;
+      negationActive = false; // Reset negation after applying to a sentiment word
+    }
+    
+    // Reset negation after 3 words if not used
+    if (negationActive && i > 0 && (i % 3 === 0)) {
+      negationActive = false;
+    }
+  }
+  
+  // Normalize sentiment to a scale from -1 to 1
+  sentiment = sentiment / (Math.abs(sentiment) + 5);
+  
+  // Use multiple signals to determine if text is a complaint
+  // 1. Contains complaint indicators
+  // 2. Has negative sentiment
+  // 3. Contains strongly negative terms
+  const isComplaint = (
+    complaintIndicatorsFound > 0 || 
+    sentiment < -0.2 ||
+    containsNegativeTerms
+  );
+  
   return { 
-    isComplaint: complaintsFound > 0, 
-    confidence: Math.min(Math.max(confidence, 0), 1) 
+    isComplaint, 
+    confidence: isComplaint ? Math.max(confidence, 0.3) : 0, 
+    category: detectedCategory || undefined,
+    sentiment,
+    containsNegativeTerms
   };
 }
 
@@ -50,9 +180,9 @@ function processComments(
   complaints: Complaint[]
 ): Complaint[] {
   for (const comment of comments) {
-    const { isComplaint, confidence } = detectComplaint(comment.body);
+    const analysis = analyzeText(comment.body);
     
-    if (isComplaint && confidence > 0.3) { // Threshold to reduce false positives
+    if (analysis.isComplaint) {
       complaints.push({
         id: `comment-${comment.id}`,
         text: comment.body,
@@ -62,10 +192,13 @@ function processComments(
           author: comment.author,
           score: comment.score,
           permalink: comment.permalink,
-          created_utc: comment.created_utc // Include created_utc from comment
+          created_utc: comment.created_utc
         },
         score: comment.score,
-        confidence
+        confidence: analysis.confidence,
+        category: analysis.category,
+        sentiment: analysis.sentiment,
+        containsNegativeTerms: analysis.containsNegativeTerms
       });
     }
     
@@ -79,7 +212,7 @@ function processComments(
 }
 
 /**
- * Extracts complaints from Reddit posts and comments
+ * Extracts complaints from Reddit posts and comments using enhanced NLP techniques
  */
 export function extractComplaints(
   posts: RedditPost[],
@@ -93,9 +226,9 @@ export function extractComplaints(
       setProgress(i + 1, posts.length, `Analyzing post ${i + 1}/${posts.length}`);
       
       // Check if the post itself contains a complaint
-      const { isComplaint, confidence } = detectComplaint(post.title + ' ' + post.content);
+      const analysis = analyzeText(post.title + ' ' + post.content);
       
-      if (isComplaint && confidence > 0.3) {
+      if (analysis.isComplaint) {
         allComplaints.push({
           id: `post-${post.id}`,
           text: post.title + (post.content ? '\n' + post.content : ''),
@@ -105,10 +238,13 @@ export function extractComplaints(
             author: post.author,
             score: post.score,
             permalink: post.permalink,
-            created_utc: post.created_utc // Include created_utc from post
+            created_utc: post.created_utc
           },
           score: post.score,
-          confidence
+          confidence: analysis.confidence,
+          category: analysis.category,
+          sentiment: analysis.sentiment,
+          containsNegativeTerms: analysis.containsNegativeTerms
         });
       }
       
@@ -117,17 +253,22 @@ export function extractComplaints(
     }
     
     console.log(`Found ${allComplaints.length} complaints in ${posts.length} posts`);
+    console.log(`Negative terms found in ${allComplaints.filter(c => c.containsNegativeTerms).length} complaints`);
+    
     return allComplaints;
   } catch (error) {
     console.error('Error extracting complaints:', error);
-    toast.error(`Failed to analyze complaints: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    toast({
+      title: "Error",
+      description: `Failed to analyze complaints: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      variant: "destructive"
+    });
     return [];
   }
 }
 
 /**
- * Simple text similarity function using Jaccard similarity
- * In a production app, you would use proper embeddings or NLP models
+ * This function is kept from the original implementation
  */
 function calculateTextSimilarity(textA: string, textB: string): number {
   if (!textA || !textB) return 0;
@@ -154,7 +295,7 @@ function calculateTextSimilarity(textA: string, textB: string): number {
 }
 
 /**
- * Clusters similar complaints together
+ * Clusters similar complaints together and adds sentiment analysis
  */
 export function clusterComplaints(
   complaints: Complaint[],
@@ -178,6 +319,17 @@ export function clusterComplaints(
           cluster.complaints.push(complaint);
           cluster.totalScore += complaint.score;
           cluster.frequency += 1;
+          
+          // Update sentiment averages
+          const totalSentiment = (cluster.avgSentiment || 0) * (cluster.complaints.length - 1) + 
+                                (complaint.sentiment || 0);
+          cluster.avgSentiment = totalSentiment / cluster.complaints.length;
+          
+          // Update negative terms count
+          if (complaint.containsNegativeTerms) {
+            cluster.negativeTermsCount = (cluster.negativeTermsCount || 0) + 1;
+          }
+          
           foundCluster = true;
           break;
         }
@@ -190,6 +342,17 @@ export function clusterComplaints(
               cluster.complaints.push(complaint);
               cluster.totalScore += complaint.score;
               cluster.frequency += 1;
+              
+              // Update sentiment averages
+              const totalSentiment = (cluster.avgSentiment || 0) * (cluster.complaints.length - 1) + 
+                                    (complaint.sentiment || 0);
+              cluster.avgSentiment = totalSentiment / cluster.complaints.length;
+              
+              // Update negative terms count
+              if (complaint.containsNegativeTerms) {
+                cluster.negativeTermsCount = (cluster.negativeTermsCount || 0) + 1;
+              }
+              
               foundCluster = true;
               break;
             }
@@ -206,7 +369,9 @@ export function clusterComplaints(
           summary: complaint.text,
           complaints: [complaint],
           totalScore: complaint.score,
-          frequency: 1
+          frequency: 1,
+          avgSentiment: complaint.sentiment || 0,
+          negativeTermsCount: complaint.containsNegativeTerms ? 1 : 0
         });
       }
     }
@@ -220,7 +385,11 @@ export function clusterComplaints(
     });
   } catch (error) {
     console.error('Error clustering complaints:', error);
-    toast.error(`Failed to cluster complaints: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    toast({
+      title: "Error",
+      description: `Failed to cluster complaints: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      variant: "destructive"
+    });
     return [];
   }
 }

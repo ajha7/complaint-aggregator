@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface SubredditFormProps {
   onAnalyze: (subreddit: string, timeRange: number) => void;
@@ -14,12 +15,17 @@ interface SubredditFormProps {
 const SubredditForm: React.FC<SubredditFormProps> = ({ onAnalyze, isLoading }) => {
   const [subreddit, setSubreddit] = useState('');
   const [timeRange, setTimeRange] = useState('3');
+  const { toast } = useToast();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!subreddit.trim()) {
-      toast.error('Please enter a subreddit name');
+      toast({
+        title: "Error",
+        description: "Please enter a subreddit name",
+        variant: "destructive"
+      });
       return;
     }
     
