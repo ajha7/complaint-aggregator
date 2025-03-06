@@ -1,6 +1,5 @@
-
 import { RedditPost, RedditComment } from './types';
-import { useToast, toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // Simulated Reddit API call to fetch posts from a subreddit
 export async function fetchSubredditPosts(
@@ -19,11 +18,7 @@ export async function fetchSubredditPosts(
     return mockPosts;
   } catch (error) {
     console.error('Error fetching subreddit posts:', error);
-    toast({
-      title: "Error",
-      description: `Failed to fetch posts from r/${subreddit}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      variant: "destructive"
-    });
+    console.error('Failed to fetch posts:', error);
     return [];
   }
 }

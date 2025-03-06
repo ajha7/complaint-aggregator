@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Header } from '@/components/Header';
 import { SubredditForm } from '@/components/SubredditForm';
@@ -66,7 +65,7 @@ const Index: React.FC = () => {
         toast({
           title: "No complaints found",
           description: `No complaints identified in r/${subreddit} posts.`,
-          variant: "warning"
+          variant: "default"
         });
         setIsLoading(false);
         return;

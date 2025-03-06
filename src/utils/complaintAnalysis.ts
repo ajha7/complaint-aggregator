@@ -57,7 +57,7 @@ const SENTIMENT_DICTIONARY = {
   'expensive': -2, 'overpriced': -2, 'slow': -2, 'broken': -3, 'bug': -2,
   'glitch': -2, 'error': -2, 'crash': -3, 'freezes': -3, 'annoying': -2,
   'confusing': -2, 'confused': -2, 'complicated': -2, 'sucks': -4, 'garbage': -4, 
-  'trash': -4, 'disaster': -4
+  'trash': -4, 'disaster': -4,
   
   // Positive terms (with weights)
   'good': 2, 'great': 3, 'excellent': 4, 'amazing': 4, 'awesome': 4,
